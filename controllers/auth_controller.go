@@ -13,8 +13,9 @@ import (
 )
 
 type AuthController struct {
-	AuthService *services.AuthService
-	UserService *services.UserService
+	AuthService     *services.AuthService
+	UserService     *services.UserService
+	HospitalService *services.HospitalService
 }
 
 type RegisterBody struct {
@@ -59,8 +60,8 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	data, err := c.UserService.GetUserPasswordByIdentifier(loginBody.UserIdentifier)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid credentials",
+			ctx.JSON(http.StatusNoContent, gin.H{
+				"message": "Record not found",
 			})
 			return
 		}
@@ -77,9 +78,27 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	hospitalData, hospitalErr := c.HospitalService.GetById(data.UserHospitalID)
+	if hospitalErr != nil {
+		if errors.Is(hospitalErr, gorm.ErrRecordNotFound) {
+			ctx.JSON(http.StatusNoContent, gin.H{
+				"message": "Record not found",
+			})
+			return
+		}
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": hospitalErr.Error(),
+		})
+		return
+	}
+
+	fmt.Println(hospitalData)
+
 	session := sessions.Default(ctx)
 	session.Set("uuid", data.UserID.String())
 	session.Set("role", string(data.UserRole))
+	session.Set("hospital_name", hospitalData.HospitalName)
+	session.Set("hospital_id", hospitalData.HospitalID)
 	err = session.Save()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -93,4 +112,31 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"uuid": data.UserID.String(),
 	})
+}
+
+func (c *AuthController) CheckAuth(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"uuid":          session.Get("uuid"),
+		"role":          session.Get("role"),
+		"hospital_name": session.Get("hospital_name"),
+		"hospital_id":   session.Get("hospital_id"),
+	})
+}
+
+func (c *AuthController) Logout(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+
+	session.Clear()
+	session.Options(sessions.Options{MaxAge: -1})
+	err := session.Save()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.SetCookie("authorization", "", -1, "/", "localhost", true, true)
 }

@@ -32,6 +32,9 @@ func main() {
 
 	districtCache := &cache.DistrictCache{RedisClient: redisClient}
 	provinceCache := &cache.ProvinceCache{RedisClient: redisClient}
+	titleCache := &cache.TitleCache{RedisClient: redisClient}
+	jobGroupCache := &cache.JobGroupCache{RedisClient: redisClient}
+	clinicCache := &cache.ClinicCache{RedisClient: redisClient}
 
 	districtRepository := &repositories.DistrictRepository{DB: config.DB}
 	districtService := &services.DistrictService{DistrictRepository: districtRepository}
@@ -41,20 +44,42 @@ func main() {
 	provinceService := &services.ProvinceService{ProvinceRepository: provinceRepository}
 	provinceController := &controllers.ProvinceController{ProvinceService: provinceService, ProvinceCache: provinceCache}
 
+	titleRepository := &repositories.TitleRepository{DB: config.DB}
+	titleService := &services.TitleService{TitleRepository: titleRepository}
+	titleController := &controllers.TitleController{TitleService: titleService, TitleCache: titleCache}
+
+	employeeRepository := &repositories.EmployeeRepository{DB: config.DB}
+	employeeService := &services.EmployeeService{EmployeeRepository: employeeRepository}
+	employeeController := &controllers.EmployeeController{EmployeeService: employeeService}
+
+	clinicRepository := &repositories.ClinicRepository{DB: config.DB}
+	clinicService := &services.ClinicService{ClinicRepository: clinicRepository, EmployeeRepository: employeeRepository}
+	clinicController := &controllers.ClinicController{ClinicService: clinicService, ClinicCache: clinicCache}
+
+	jobGroupRepository := &repositories.JobGroupRepository{DB: config.DB}
+	jobGroupService := &services.JobGroupService{JobGroupRepository: jobGroupRepository}
+	jobGroupController := &controllers.JobGroupController{JobGroupService: jobGroupService, JobGroupCache: jobGroupCache}
+
 	userRepository := &repositories.UserRepository{DB: config.DB}
 	userService := &services.UserService{UserRepository: userRepository}
-	//userController := &controllers.ProvinceController{ProvinceService: provinceService}
+	userController := &controllers.UserController{UserService: userService}
 
 	hospitalRepository := &repositories.HospitalRepository{DB: config.DB}
-	//hospitalService := &services.HospitalService{HospitalRepository: hospitalRepository}
-	//provinceController := &controllers.ProvinceController{ProvinceService: provinceService}
+	hospitalService := &services.HospitalService{HospitalRepository: hospitalRepository}
+	hospitalController := &controllers.HospitalController{HospitalService: hospitalService}
 
 	authService := &services.AuthService{UserRepository: userRepository, HospitalRepository: hospitalRepository}
-	authController := &controllers.AuthController{AuthService: authService, UserService: userService}
+	authController := &controllers.AuthController{AuthService: authService, UserService: userService, HospitalService: hospitalService}
 
 	routes.DistrictRoute(router, districtController)
 	routes.ProvinceRoute(router, provinceController)
 	routes.AuthRoute(router, authController)
+	routes.UserRoute(router, userController)
+	routes.EmployeeRoute(router, employeeController)
+	routes.ClinicRoute(router, clinicController)
+	routes.TitleRoute(router, titleController)
+	routes.JobGroupRoute(router, jobGroupController)
+	routes.HospitalRoute(router, hospitalController)
 
 	if err := router.Run(":9000"); err != nil {
 		log.Fatal("failed run app: ", err)

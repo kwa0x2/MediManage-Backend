@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis/v8"
 	"github.com/kwa0x2/MediManage-Backend/models"
+	"time"
 )
 
 type ProvinceCache struct {
@@ -19,7 +20,9 @@ func (c *ProvinceCache) SetAllProvince(provinces []*models.Province) error {
 		return err
 	}
 
-	err = c.RedisClient.Set(ctx, "province_all", data, 0).Err()
+	expiration := 24 * time.Hour
+
+	err = c.RedisClient.Set(ctx, "province_all", data, expiration).Err()
 	if err != nil {
 		return err
 	}

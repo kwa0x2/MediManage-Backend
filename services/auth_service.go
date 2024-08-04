@@ -16,10 +16,13 @@ func (s *AuthService) Register(hospital *models.Hospital, user *models.User) err
 		return tx.Error
 	}
 
-	if err := s.HospitalRepository.Create(tx, hospital); err != nil {
+	addedHospitalId, err := s.HospitalRepository.Create(tx, hospital)
+	if err != nil {
 		tx.Rollback()
 		return err
 	}
+
+	user.UserHospitalID = addedHospitalId
 
 	if err := s.UserRepository.Create(tx, user); err != nil {
 		tx.Rollback()

@@ -15,6 +15,7 @@ type User struct {
 	UserEmail          string             `json:"user_email" gorm:"not null"`
 	UserPhone          string             `json:"user_phone" gorm:"not null;size:15"`
 	UserPassword       string             `json:"user_password" gorm:"not null"`
+	UserHospitalID     int64              `json:"user_hospital_id" gorm:"not null"`
 	UserRole           types.UserRoleType `json:"user_role" gorm:"not null"`
 	CreatedAt          time.Time          `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt          time.Time          `json:"updated_at"`

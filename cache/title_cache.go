@@ -10,21 +10,21 @@ import (
 	"time"
 )
 
-type DistrictCache struct {
+type TitleCache struct {
 	RedisClient *redis.Client
 }
 
-func (c *DistrictCache) SetAllDistrictsByProvince(districts []*models.District, provinceName string) error {
+func (c *TitleCache) SetAllTitleByJobGroupName(titles []*models.Title, jobGroupName string) error {
 	ctx := context.Background()
 
-	data, err := json.Marshal(districts)
+	data, err := json.Marshal(titles)
 	if err != nil {
 		return err
 	}
 
 	expiration := 24 * time.Hour
 
-	key := fmt.Sprintf("districts_all_%s", strings.ToLower(provinceName))
+	key := fmt.Sprintf("title_%s", strings.ToLower(jobGroupName))
 	err = c.RedisClient.Set(ctx, key, data, expiration).Err()
 	if err != nil {
 		return err
@@ -33,19 +33,19 @@ func (c *DistrictCache) SetAllDistrictsByProvince(districts []*models.District, 
 	return nil
 }
 
-func (c *DistrictCache) GetAllDistrictsByProvince(provinceName string) ([]*models.District, error) {
+func (c *TitleCache) GetAllTitleByJobGroupName(jobGroupName string) ([]*models.Title, error) {
 	ctx := context.Background()
-	key := fmt.Sprintf("districts_all_%s", strings.ToLower(provinceName))
+	key := fmt.Sprintf("titles_%s", strings.ToLower(jobGroupName))
 	val, err := c.RedisClient.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	var districts []*models.District
-	err = json.Unmarshal([]byte(val), &districts)
+	var titles []*models.Title
+	err = json.Unmarshal([]byte(val), &titles)
 	if err != nil {
 		return nil, err
 	}
 
-	return districts, nil
+	return titles, nil
 }

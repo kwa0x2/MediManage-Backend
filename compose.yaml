@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  database:
+    image: postgres:latest
+    container_name: golang_testcase_postgres
+    restart: always
+    environment:
+      - POSTGRES_DB=medimanage_db
+      - POSTGRES_USER=medimanage
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5438:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:latest
+    restart: always
+    container_name: golang_testcase_redis
+    ports:
+      - "6380:6379"
+    command: ["redis-server", "--requirepass", "medimanage"]
+    volumes:
+      - redis:/data
+
+  golang_testcase_api:
+    build: .
+    container_name: golang_testcase_api
+    ports:
+      - "9000:9000"
+    restart: on-failure
+    depends_on:
+      - database
+      - redis
+    links:
+      - database
+      - redis
+    environment:
+      - POSTGRE_USER=medimanage
+      - POSTGRE_PASSWORD=postgres
+      - POSTGRE_HOST=golang_testcase_postgres
+      - POSTGRE_DB=medimanage_db
+      - REDIS_HOST=redis:6379
+      - REDIS_PASSWORD=medimanage
+      - SESSION_SECRET_KEY=6XM2Xa/gnN0aMGHt44JMOcl/kfA0axF7SvnImGCUwVpv5X/Gp86FOKPE5hKOjJmDqY4q+DIWhTayw0C9gSKykm2mdDKOG6FZBkT/KLbZtr8=
+volumes:
+  db:
+  redis:

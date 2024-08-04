@@ -23,7 +23,7 @@ func (c *DistrictController) GetAll(ctx *gin.Context) {
 }
 
 func (c *DistrictController) GetAllByProvince(ctx *gin.Context) {
-	provinceName := ctx.Param("province_name")
+	provinceName := ctx.Param("provinceName")
 
 	if provinceName == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Province parameter is required"})
